@@ -24,8 +24,7 @@ def _active_relu(input):
 
 # output function: softmax
 def _output_softmax(input):
-    e_input = np.exp(input - np.max(input))
-    return e_input / e_input.sum()
+    return np.exp(input) / np.exp(input).sum(axis=0)
 
 # only input -wi/bi-> hidden and hidden -wo/bo-> output, one layer only
 # note: weights needs to switch i, j to j, i for matrix product purpose
