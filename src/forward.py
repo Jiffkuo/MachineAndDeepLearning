@@ -48,22 +48,27 @@ _init_bias(bo)
 x = np.array([0.5,0.6,0.1,0.25,0.33,0.9,0.88,0.76,0.69,0.96])
 print "input X =",x
 
-outputs = []
 # forward pass: input - hidden layer
+firstout = []
+firstact = []
 firstpass = x
 for w, b in zip(wi, bi):
     firstpass = np.dot(w, firstpass) + b
-    outputs.append(firstpass)
+    firstout.append(firstpass)
     firstpass = _active_relu(firstpass)
+    firstact.append(firstpass)
 #print len(firstpass)
 #print firstpass
 
 # forward pass: hidden layer - output
+secondout = []
+secondact = []
 secondpass = firstpass
 for w, b in zip(wo, bo):
     secondpass = np.dot(w, secondpass) + b
+    secondout.append(secondpass)
     secondpass = _output_softmax(secondpass)
-    outputs.append(secondpass)
+    secondact.append(secondpass)
 print "output Y =",secondpass
 
 # calculate sample loss function
@@ -71,22 +76,36 @@ T = np.array([1, 0, 0])
 L = 0
 for t, y in zip(T, secondpass):
     L = L + t * np.log10(y)
-print L
+print "Sample Loss function = ", L
 
 # backward pass: calculate delta
-deltas = []
+hiddendeltas = []
+outputdeltas = []
 # output layer delta
-delta_output = np.array(outputs[1]) - T
+delta_output = np.array(secondact) - T
 print "Output layer delta ="
-for delta in delta_output.tolist():
+for delta in delta_output:
     print delta
-    deltas.append(delta)
+    outputdeltas.append(delta)
 # hidden layer delta
 print "Hidden layer delta ="
 for i in range(len(wo.T)):
     delta = np.multiply(
         np.dot(wo.T[i], delta_output.T),
-        _active_relu(outputs[0][i], derivative=True)
+        _active_relu(firstout[0][i], derivative=True)
     )
-    print delta
-    deltas.append(delta)
+    hiddendeltas.append(delta[0])
+print np.array(hiddendeltas)
+# calculate new weights with SGD
+learning_rate = 0.01
+totalin = len(wi)
+print "New weights between input and hidden layers"
+for w in zip(wi.T):
+    newwi = w - (learning_rate/totalin) * np.dot(np.array(hiddendeltas), np.array(firstact)[0])
+    print newwi
+
+totalout = len(wo)
+print "New weights between hidden and output layers"
+for w in zip(wo.T):
+    newwo = w - (learning_rate/totalout) * np.dot(np.array(outputdeltas), np.array(secondact)[0])
+    print newwo
